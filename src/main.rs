@@ -21,6 +21,7 @@ use eyre::Result;
 use crate::cli::version::VERSION;
 use crate::cli::Cli;
 use crate::config::Config;
+use crate::timings::{timing, timing_done};
 
 #[macro_use]
 mod output;
@@ -62,20 +63,37 @@ mod shims;
 mod shorthands;
 pub mod tera;
 pub mod timeout;
+mod timings;
 mod toml;
 mod toolset;
 mod ui;
 
 fn main() -> Result<()> {
+    timing("main");
     *env::ARGS.write().unwrap() = env::args().collect();
+    rayon::spawn(|| {
+        Cli::new();
+    });
     color_eyre::install()?;
     let log_level = *env::RTX_LOG_LEVEL;
     logger::init(log_level, *env::RTX_LOG_FILE_LEVEL);
     handle_ctrlc();
+    // rayon::scope(|s| {
+    //     s.spawn(|_| {
+    //         *env::ARGS.write().unwrap() = env::args().collect();
+    //     });
+    //     s.spawn(|_| color_eyre::install().unwrap());
+    //     s.spawn(|_| logger::init(*env::RTX_LOG_LEVEL, *env::RTX_LOG_FILE_LEVEL));
+    //     s.spawn(|_| handle_ctrlc());
+    //     s.spawn(|_| {
+    //         Cli::new();
+    //     });
+    // });
+    timing("init");
 
     match run().with_section(|| VERSION.to_string().header("Version:")) {
         Ok(()) => Ok(()),
-        Err(err) if log_level < log::LevelFilter::Debug => {
+        Err(err) if *env::RTX_LOG_LEVEL < log::LevelFilter::Debug => {
             display_friendly_err(err);
             exit(1);
         }
@@ -88,15 +106,23 @@ fn main() -> Result<()> {
 fn run() -> Result<()> {
     // show version before loading config in case of error
     cli::version::print_version_if_requested();
+    timing("print_version...");
     migrate::run();
+    timing("migrate");
 
     let config = Config::try_get()?;
+    timing("config");
     shims::handle_shim(&config)?;
+    timing("shim");
     if config.should_exit_early {
         return Ok(());
     }
     let cli = Cli::new_with_external_commands(&config);
-    cli.run(&env::ARGS.read().unwrap())
+    timing("cli");
+    let res = cli.run(&env::ARGS.read().unwrap());
+    timing("run");
+    timing_done();
+    res
 }
 
 fn handle_ctrlc() {

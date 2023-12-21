@@ -1,3 +1,4 @@
+use confique::Partial;
 use std::collections::{BTreeMap, HashMap};
 use std::fmt::{Display, Formatter};
 use std::path::PathBuf;
@@ -22,6 +23,7 @@ use crate::file::display_path;
 use crate::plugins::core::{PluginMap, CORE_PLUGINS, EXPERIMENTAL_CORE_PLUGINS};
 use crate::plugins::{ExternalPlugin, Plugin, PluginName, PluginType};
 use crate::shorthands::{get_shorthands, Shorthands};
+use crate::timings::timing;
 use crate::{dirs, env, file, hook_env};
 
 pub mod config_file;
@@ -63,10 +65,15 @@ impl Config {
         Ok(config)
     }
     pub fn load() -> Result<Self> {
+        timing("a");
         let cli_settings = Cli::new().settings(&env::ARGS.read().unwrap());
+        timing("b");
         Settings::add_partial(cli_settings);
         let global_config = load_rtxrc()?;
         Settings::add_partial(global_config.settings()?);
+        timing("c");
+        SettingsPartial::empty();
+        timing("d");
 
         let (config_paths, plugins) = rayon::join(
             || load_config_paths(&DEFAULT_CONFIG_FILENAMES),
