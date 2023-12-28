@@ -50,6 +50,7 @@ mod trust;
 mod uninstall;
 mod unset;
 mod upgrade;
+mod usage;
 mod r#use;
 pub mod version;
 mod watch;
@@ -96,8 +97,9 @@ pub enum Commands {
     Task(task::Task),
     Trust(trust::Trust),
     Uninstall(uninstall::Uninstall),
-    Upgrade(upgrade::Upgrade),
     Unset(unset::Unset),
+    Upgrade(upgrade::Upgrade),
+    Usage(usage::Usage),
     Use(r#use::Use),
     Version(version::Version),
     Watch(watch::Watch),
@@ -155,6 +157,7 @@ impl Commands {
             Self::Uninstall(cmd) => cmd.run(),
             Self::Unset(cmd) => cmd.run(),
             Self::Upgrade(cmd) => cmd.run(),
+            Self::Usage(cmd) => cmd.run(),
             Self::Use(cmd) => cmd.run(),
             Self::Version(cmd) => cmd.run(),
             Self::Watch(cmd) => cmd.run(),

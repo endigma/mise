@@ -45,8 +45,13 @@ depends = [
     "test"
 ]
 
-[tasks.render-completions]
+[tasks.render-usage]
 depends = ["build"]
+env = { CLICOLOR_FORCE = "0" }
+run = "target/debug/mise usage > mise.gen.usage.kdl"
+
+[tasks.render-completions]
+depends = ["build", "render-usage"]
 env = { NO_COLOR = "1" }
 sources = ["target/debug/mise"]
 outputs = [

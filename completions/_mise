@@ -54,6 +54,7 @@ _mise() {
         (remove|rm|uninstall) __mise_uninstall_cmd && ret=0 ;;
         (unset) __mise_unset_cmd && ret=0 ;;
         (up|upgrade) __mise_upgrade_cmd && ret=0 ;;
+        (usage) __mise_usage_cmd && ret=0 ;;
         (u|use) __mise_use_cmd && ret=0 ;;
         (v|version) __mise_version_cmd && ret=0 ;;
         (w|watch) __mise_watch_cmd && ret=0 ;;
@@ -741,6 +742,7 @@ __mise_task_cmd() {
     (args)
       curcontext="${curcontext%:*:*}:mise-cmd-$words[1]:"
       case $words[1] in
+        (deps) __mise_task_deps_cmd && ret=0 ;;
         (edit) __mise_task_edit_cmd && ret=0 ;;
         (ls) __mise_task_ls_cmd && ret=0 ;;
         (r|run) __mise_task_run_cmd && ret=0 ;;
@@ -749,6 +751,16 @@ __mise_task_cmd() {
   esac
 
 return ret
+}
+(( $+functions[__mise_task_deps_cmd] )) ||
+__mise_task_deps_cmd() {
+  _arguments -s -S \
+    '*::tasks:' \
+    '--dot[Display dependencies in DOT format]' \
+    '(-C --cd)'{-C,--cd}'=[Change directory before running command]:cd:_directories' \
+    '(-q --quiet)'{-q,--quiet}'[Suppress non-error messages]' \
+    '*'{-v,--verbose}'[Show extra output (use -vv for even more)]' \
+    '(-y --yes)'{-y,--yes}'[Answer yes to all confirmation prompts]'
 }
 (( $+functions[__mise_task_edit_cmd] )) ||
 __mise_task_edit_cmd() {
@@ -828,6 +840,14 @@ __mise_upgrade_cmd() {
     '(-j --jobs)'{-j,--jobs}'=[Number of jobs to run in parallel]:jobs:' \
     '(-i --interactive)'{-i,--interactive}'[Display multiselect menu to choose which tools to upgrade]' \
     '--raw[Directly pipe stdin/stdout/stderr from plugin to user Sets --jobs=1]' \
+    '(-C --cd)'{-C,--cd}'=[Change directory before running command]:cd:_directories' \
+    '(-q --quiet)'{-q,--quiet}'[Suppress non-error messages]' \
+    '*'{-v,--verbose}'[Show extra output (use -vv for even more)]' \
+    '(-y --yes)'{-y,--yes}'[Answer yes to all confirmation prompts]'
+}
+(( $+functions[__mise_usage_cmd] )) ||
+__mise_usage_cmd() {
+  _arguments -s -S \
     '(-C --cd)'{-C,--cd}'=[Change directory before running command]:cd:_directories' \
     '(-q --quiet)'{-q,--quiet}'[Suppress non-error messages]' \
     '*'{-v,--verbose}'[Show extra output (use -vv for even more)]' \
@@ -927,6 +947,7 @@ __mise_cmds() {
     {remove,rm,uninstall}':Removes runtime versions'
     'unset:Remove environment variable(s) from the config file'
     {up,upgrade}':Upgrades outdated tool versions'
+    'usage:Generate usage spec'
     {u,use}':Change the active version of a tool locally or globally.'
     'version:Show mise version'
     {w,watch}':\[experimental\] Run a task watching for changes'
@@ -1000,6 +1021,7 @@ __mise_sync_cmds() {
 (( $+functions[__mise_task_cmds] )) ||
 __mise_task_cmds() {
   local commands; commands=(
+    'deps:\[experimental\] Display a tree visualization of a dependency graph'
     'edit:\[experimental\] Edit a task with \$EDITOR'
     'ls:\[experimental\] List available tasks to execute'
     {r,run}':\[experimental\] Run a task'

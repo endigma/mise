@@ -102,6 +102,8 @@ versions = "6"
 which = "5"
 zip = { version = "0.6", default-features = false, features = ["deflate"] }
 
+usage-lib = { path = './usage', features = ["clap"] }
+
 [target.'cfg(unix)'.dependencies]
 exec = "0.3"
 

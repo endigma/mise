@@ -5,7 +5,7 @@ complete -kxc mise -s C -l cd -a "(__fish_complete_directories)" -d 'Change dire
 complete -kxc mise -s q -l quiet -d 'Suppress non-error messages'
 complete -kxc mise -s v -l verbose -d 'Show extra output (use -vv for even more)'
 complete -kxc mise -s y -l yes -d 'Answer yes to all confirmation prompts'
-set -l others activate alias bin-paths cache completion config current deactivate direnv doctor env exec implode install latest link ls ls-remote outdated plugins prune reshim run self-update set settings shell sync task trust uninstall unset upgrade use version watch where which
+set -l others activate alias bin-paths cache completion config current deactivate direnv doctor env exec implode install latest link ls ls-remote outdated plugins prune reshim run self-update set settings shell sync task trust uninstall unset upgrade usage use version watch where which
 complete -xc mise -n "not $fssf $others" -a activate -d 'Initializes mise in the current shell session'
 complete -xc mise -n "not $fssf $others" -a alias -d 'Manage aliases'
 complete -xc mise -n "not $fssf $others" -a bin-paths -d 'List all the active runtime bin paths'
@@ -39,6 +39,7 @@ complete -xc mise -n "not $fssf $others" -a trust -d 'Marks a config file as tru
 complete -xc mise -n "not $fssf $others" -a uninstall -d 'Removes runtime versions'
 complete -xc mise -n "not $fssf $others" -a unset -d 'Remove environment variable(s) from the config file'
 complete -xc mise -n "not $fssf $others" -a upgrade -d 'Upgrades outdated tool versions'
+complete -xc mise -n "not $fssf $others" -a usage -d 'Generate usage spec'
 complete -xc mise -n "not $fssf $others" -a use -d 'Change the active version of a tool locally or globally.'
 complete -xc mise -n "not $fssf $others" -a version -d 'Show mise version'
 complete -xc mise -n "not $fssf $others" -a watch -d '[experimental] Run a task watching for changes'
@@ -290,7 +291,7 @@ complete -xc mise -n "$fssf task; and not $fssf $others" -a run -d '[experimenta
 
 # task deps
 complete -kxc mise -n "$fssf task; and $fssf deps" -l dot -d 'Display dependencies in DOT format'
-complete -kxc mise -n "$fssf task; and $fssf deps" -a "(__mise_tasks)" -d 'Tasks to show dependencies for'
+complete -kxc mise -n "$fssf task; and $fssf deps" -d 'Tasks to show dependencies for'
 
 # task edit
 complete -kxc mise -n "$fssf task; and $fssf edit" -s p -l path -d 'Display the path to the task instead of editing it'
@@ -334,6 +335,8 @@ complete -kxc mise -n "$fssf upgrade" -s i -l interactive -d 'Display multiselec
 complete -kxc mise -n "$fssf upgrade" -s j -l jobs -d 'Number of jobs to run in parallel'
 complete -kxc mise -n "$fssf upgrade" -l raw -d 'Directly pipe stdin/stdout/stderr from plugin to user Sets --jobs=1'
 complete -kxc mise -n "$fssf upgrade" -a "(__mise_tool_versions)" -d 'Tool(s) to upgrade'
+
+# usage
 
 # use
 complete -kxc mise -n "$fssf use" -s e -l env -d 'Modify an environment-specific config file like .mise.<env>.toml'
