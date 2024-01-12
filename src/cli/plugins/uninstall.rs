@@ -1,3 +1,4 @@
+use crate::cli::args::plugin::PluginArg;
 use miette::Result;
 
 use crate::config::Config;
@@ -11,7 +12,7 @@ use crate::ui::style;
 pub struct PluginsUninstall {
     /// Plugin(s) to remove
     #[clap(verbatim_doc_comment)]
-    plugin: Vec<String>,
+    plugin: Vec<PluginArg>,
 
     /// Also remove the plugin's installs, downloads, and cache
     #[clap(long, short, verbatim_doc_comment)]
@@ -30,14 +31,13 @@ impl PluginsUninstall {
             true => config
                 .list_plugins()
                 .into_iter()
-                .map(|p| p.name().to_string())
+                .map(|p| p.to_arg())
                 .collect(),
             false => self.plugin.clone(),
         };
 
-        for plugin_name in plugins {
-            let plugin_name = unalias_plugin(&plugin_name);
-            self.uninstall_one(config, plugin_name, &mpr)?;
+        for p in &plugins {
+            self.uninstall_one(config, p, &mpr)?;
         }
         Ok(())
     }
@@ -45,10 +45,10 @@ impl PluginsUninstall {
     fn uninstall_one(
         &self,
         config: &Config,
-        plugin_name: &str,
+        plugin: &PluginArg,
         mpr: &MultiProgressReport,
     ) -> Result<()> {
-        match config.get_or_create_plugin(plugin_name) {
+        match config.get_or_create_plugin(&plugin.plugin_name, plugin.plugin_type) {
             plugin if plugin.is_installed() => {
                 let prefix = format!("plugin:{}", style::eblue(&plugin.name()));
                 let pr = mpr.add(&prefix);
@@ -58,7 +58,7 @@ impl PluginsUninstall {
                 }
                 pr.finish_with_message("uninstalled".into());
             }
-            _ => warn!("{} is not installed", style::eblue(plugin_name)),
+            _ => warn!("{} is not installed", style::eblue(&plugin)),
         }
         Ok(())
     }

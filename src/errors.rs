@@ -8,7 +8,7 @@ use crate::plugins::PluginName;
 #[diagnostic(help("help me!"))]
 pub enum Error {
     #[error("[{0}] plugin not installed")]
-    PluginNotInstalled(PluginName),
+    PluginNotInstalled(String),
     #[error("{0}@{1} not installed")]
     VersionNotInstalled(PluginName, String),
     #[error("{} exited with non-zero status: {}", .0, render_exit_status(.1))]

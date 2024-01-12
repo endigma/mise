@@ -1,3 +1,4 @@
+use crate::cli::args::plugin::PluginArg;
 use console::style;
 use miette::{IntoDiagnostic, Result};
 use rayon::prelude::*;
@@ -15,7 +16,7 @@ use crate::ui::multi_progress_report::MultiProgressReport;
 pub struct Update {
     /// Plugin(s) to update
     #[clap()]
-    plugin: Option<Vec<PluginName>>,
+    plugin: Option<Vec<PluginArg>>,
 
     /// Number of jobs to run in parallel
     /// Default: 4
@@ -33,7 +34,6 @@ impl Update {
                         Some((p, ref_)) => (p, Some(ref_.to_string())),
                         None => (p.as_str(), None),
                     };
-                    let p = unalias_plugin(p);
                     let plugin = config.get_or_create_plugin(p);
                     Ok((plugin.clone(), ref_))
                 })

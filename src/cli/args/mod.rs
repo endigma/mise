@@ -1,6 +1,7 @@
 pub mod cd;
 pub mod env_var;
 pub mod log_level;
+pub mod plugin;
 pub mod quiet;
 pub mod tool;
 pub mod verbose;

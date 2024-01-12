@@ -19,6 +19,7 @@ use crate::config::config_file::mise_toml::MiseToml;
 use crate::config::config_file::ConfigFile;
 use crate::config::tracking::Tracker;
 use crate::file::display_path;
+use crate::plugins::cargo_plugin::CargoPlugin;
 use crate::plugins::core::{PluginMap, CORE_PLUGINS, EXPERIMENTAL_CORE_PLUGINS};
 use crate::plugins::{ExternalPlugin, Plugin, PluginName, PluginType};
 use crate::shorthands::{get_shorthands, Shorthands};
@@ -145,11 +146,19 @@ impl Config {
             .collect()
     }
 
-    pub fn get_or_create_plugin(&self, plugin_name: &str) -> Arc<dyn Plugin> {
+    pub fn get_or_create_plugin(
+        &self,
+        plugin_name: &str,
+        plugin_type: PluginType,
+    ) -> Arc<dyn Plugin> {
         if let Some(plugin) = self.plugins.read().unwrap().get(plugin_name) {
             return plugin.clone();
         }
-        let plugin = ExternalPlugin::newa(plugin_name.to_string());
+        let plugin = match plugin_type {
+            PluginType::External => ExternalPlugin::newa(plugin_name.to_string()),
+            PluginType::Cargo => Arc::new(CargoPlugin::new(plugin_name.to_string())),
+            PluginType::Core => panic!("Cannot create core plugin"),
+        };
         self.plugins
             .write()
             .unwrap()

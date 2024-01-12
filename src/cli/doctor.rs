@@ -162,6 +162,7 @@ fn render_plugins(config: &Config) -> String {
                 }
             }
             PluginType::Core => format!("  {padded_name} (core)\n"),
+            PluginType::Cargo => format!("  {padded_name} (cargo)\n"),
         };
         s.push_str(&si);
     }

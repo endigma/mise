@@ -91,7 +91,7 @@ impl LsRemote {
     fn get_plugin(&self, config: &Config) -> Result<Option<Arc<dyn Plugin>>> {
         match &self.plugin {
             Some(tool_arg) => {
-                let plugin = config.get_or_create_plugin(&tool_arg.plugin);
+                let plugin = config.get_or_create_plugin(&tool_arg.plugin, tool_arg.plugin_type);
                 let mpr = MultiProgressReport::get();
                 plugin.ensure_installed(&mpr, false)?;
                 Ok(Some(plugin))

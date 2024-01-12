@@ -3,6 +3,7 @@ use miette::Result;
 use rayon::prelude::*;
 
 use crate::config::Config;
+use crate::plugins::PluginType;
 
 pub fn commands(config: &Config) -> Vec<Command> {
     config
@@ -25,7 +26,7 @@ pub fn execute(plugin: &str, args: &ArgMatches) -> Result<()> {
         .find(|c| c.get_name() == plugin)
     {
         if let Some((subcommand, matches)) = args.subcommand() {
-            let plugin = config.get_or_create_plugin(plugin);
+            let plugin = config.get_or_create_plugin(plugin, PluginType::External);
             let args: Vec<String> = matches
                 .get_raw("args")
                 .unwrap_or_default()

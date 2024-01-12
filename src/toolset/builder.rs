@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use crate::cli::args::plugin::PluginArg;
 use itertools::Itertools;
 use miette::Result;
 
@@ -12,7 +13,7 @@ use crate::toolset::{ToolSource, ToolVersionRequest, Toolset};
 pub struct ToolsetBuilder {
     args: Vec<ToolArg>,
     global_only: bool,
-    tool_filter: Option<Vec<String>>,
+    tool_filter: Option<Vec<PluginArg>>,
 }
 
 impl ToolsetBuilder {
@@ -30,8 +31,8 @@ impl ToolsetBuilder {
         self
     }
 
-    pub fn with_tools(mut self, tools: &[&str]) -> Self {
-        self.tool_filter = Some(tools.iter().map(|s| s.to_string()).collect());
+    pub fn with_tools(mut self, tools: &[&PluginArg]) -> Self {
+        self.tool_filter = Some(tools.iter().map(|p| *p.clone()).collect());
         self
     }
 
@@ -45,7 +46,9 @@ impl ToolsetBuilder {
         self.load_runtime_env(&mut toolset, env::vars().collect());
         self.load_runtime_args(&mut toolset);
         if let Some(tools) = self.tool_filter {
-            toolset.versions.retain(|p, _| tools.contains(p));
+            toolset
+                .versions
+                .retain(|p, _| tools.iter().any(|t| t.is_arg(p)))
         }
         toolset.resolve(config);
 

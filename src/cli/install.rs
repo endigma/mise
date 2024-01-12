@@ -82,28 +82,32 @@ impl Install {
         mpr: &MultiProgressReport,
     ) -> Result<Vec<ToolVersion>> {
         let mut requests = vec![];
-        for runtime in ToolArg::double_tool_condition(runtimes) {
+        for ta in ToolArg::double_tool_condition(runtimes) {
             let default_opts = ToolVersionOptions::new();
-            match runtime.tvr {
-                Some(tv) => requests.push((runtime.plugin, tv, default_opts.clone())),
+            match ta.tvr {
+                Some(tv) => requests.push((ta.plugin, ta.plugin_type, tv, default_opts.clone())),
                 None => {
-                    if runtime.tvr.is_none() {
-                        match ts.versions.get(&runtime.plugin) {
+                    if ta.tvr.is_none() {
+                        match ts.versions.get(&ta.plugin) {
                             Some(tvl) => {
                                 for (tvr, opts) in &tvl.requests {
                                     requests.push((
-                                        runtime.plugin.clone(),
+                                        ta.plugin.clone(),
+                                        ta.plugin_type,
                                         tvr.clone(),
                                         opts.clone(),
                                     ));
                                 }
                             }
                             None => {
-                                let tvr = ToolVersionRequest::Version(
-                                    runtime.plugin.clone(),
-                                    "latest".into(),
-                                );
-                                requests.push((runtime.plugin, tvr, default_opts.clone()));
+                                let tvr =
+                                    ToolVersionRequest::Version(ta.plugin.clone(), "latest".into());
+                                requests.push((
+                                    ta.plugin,
+                                    ta.plugin_type,
+                                    tvr,
+                                    default_opts.clone(),
+                                ));
                             }
                         }
                     }
@@ -111,8 +115,8 @@ impl Install {
             }
         }
         let mut tool_versions = vec![];
-        for (plugin_name, tvr, opts) in requests {
-            let plugin = config.get_or_create_plugin(&plugin_name);
+        for (plugin_name, plugin_type, tvr, opts) in requests {
+            let plugin = config.get_or_create_plugin(&plugin_name, plugin_type);
             plugin.ensure_installed(mpr, false)?;
             let tv = tvr.resolve(plugin.as_ref(), opts, true)?;
             tool_versions.push(tv);

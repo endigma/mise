@@ -15,6 +15,7 @@ use versions::Versioning;
 pub use external_plugin::ExternalPlugin;
 pub use script_manager::{Script, ScriptManager};
 
+use crate::cli::args::plugin::PluginArg;
 use crate::config::{Config, Settings};
 use crate::file::{display_path, remove_all, remove_all_with_warning};
 use crate::install_context::InstallContext;
@@ -25,6 +26,7 @@ use crate::ui::multi_progress_report::MultiProgressReport;
 use crate::ui::progress_report::SingleReport;
 use crate::{dirs, file};
 
+pub mod cargo_plugin;
 pub mod core;
 mod external_plugin;
 mod external_plugin_cache;
@@ -37,6 +39,15 @@ pub trait Plugin: Debug + Send + Sync {
     fn name(&self) -> &str;
     fn get_type(&self) -> PluginType {
         PluginType::Core
+    }
+    fn is_arg(&self, arg: &PluginArg) -> bool {
+        arg.plugin_name == self.name() && arg.plugin_type == self.get_type()
+    }
+    fn to_arg(&self) -> PluginArg {
+        PluginArg {
+            plugin_name: self.name().to_string(),
+            plugin_type: self.get_type(),
+        }
     }
     fn installs_path(&self) -> PathBuf {
         dirs::INSTALLS.join(self.name())
@@ -382,8 +393,9 @@ impl Ord for dyn Plugin {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PluginType {
+    Cargo,
     Core,
     External,
 }

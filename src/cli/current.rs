@@ -1,3 +1,4 @@
+use crate::cli::args::plugin::PluginArg;
 use console::style;
 use miette::Result;
 
@@ -16,7 +17,7 @@ pub struct Current {
     /// Plugin to show versions of
     /// e.g.: ruby, node
     #[clap()]
-    plugin: Option<String>,
+    plugin: Option<PluginArg>,
 }
 
 impl Current {
@@ -24,11 +25,10 @@ impl Current {
         let config = Config::try_get()?;
         let ts = ToolsetBuilder::new().build(&config)?;
         match &self.plugin {
-            Some(plugin_name) => {
-                let plugin_name = unalias_plugin(plugin_name);
-                let plugin = config.get_or_create_plugin(plugin_name);
+            Some(p) => {
+                let plugin = config.get_or_create_plugin(&p.plugin_name, p.plugin_type);
                 if !plugin.is_installed() {
-                    bail!("Plugin {} is not installed", plugin_name);
+                    bail!("Plugin {p} is not installed");
                 }
                 self.one(ts, plugin.as_ref())
             }

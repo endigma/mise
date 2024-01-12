@@ -9,12 +9,13 @@ use itertools::Itertools;
 use miette::{IntoDiagnostic, Result};
 use serde_derive::Serialize;
 
+use crate::cli::args::plugin::PluginArg;
 use tabled::{Table, Tabled};
 use versions::Versioning;
 
 use crate::config::Config;
 use crate::errors::Error::PluginNotInstalled;
-use crate::plugins::{unalias_plugin, Plugin, PluginName};
+use crate::plugins::{Plugin, PluginName};
 use crate::toolset::{ToolSource, ToolVersion, ToolsetBuilder};
 use crate::ui::table;
 
@@ -24,10 +25,10 @@ use crate::ui::table;
 pub struct Ls {
     /// Only show tool versions from [PLUGIN]
     #[clap(conflicts_with = "plugin_flag")]
-    plugin: Option<Vec<String>>,
+    plugin: Option<Vec<PluginArg>>,
 
     #[clap(long = "plugin", short, hide = true)]
-    plugin_flag: Option<String>,
+    plugin_flag: Option<PluginArg>,
 
     /// Only show tool versions currently specified in a .tool-versions/.mise.toml
     #[clap(long, short)]
@@ -68,8 +69,7 @@ impl Ls {
         let config = Config::try_get()?;
         self.plugin = self
             .plugin
-            .or_else(|| self.plugin_flag.clone().map(|p| vec![p]))
-            .map(|p| p.into_iter().map(|p| unalias_plugin(&p).into()).collect());
+            .or_else(|| self.plugin_flag.clone().map(|p| vec![p]));
         self.verify_plugin(&config)?;
 
         let mut runtimes = self.get_runtime_list(&config)?;
@@ -99,10 +99,11 @@ impl Ls {
     fn verify_plugin(&self, config: &Config) -> Result<()> {
         match &self.plugin {
             Some(plugins) => {
-                for plugin_name in plugins {
-                    let plugin = config.get_or_create_plugin(plugin_name);
+                for p in plugins {
+                    let plugin = config.get_or_create_plugin(&p.plugin_name, p.plugin_type);
                     if !plugin.is_installed() {
-                        return Err(PluginNotInstalled(plugin_name.clone())).into_diagnostic()?;
+                        return Err(PluginNotInstalled(plugin.name().to_string()))
+                            .into_diagnostic()?;
                     }
                 }
             }
@@ -116,7 +117,7 @@ impl Ls {
             // only runtimes for 1 plugin
             let runtimes: Vec<JSONToolVersion> = runtimes
                 .into_iter()
-                .filter(|(p, _, _)| plugins.contains(&p.name().to_string()))
+                .filter(|(p, _, _)| plugins.iter().any(|p2| p.is_arg(p2)))
                 .map(|row| row.into())
                 .collect();
             miseprintln!(
@@ -183,7 +184,7 @@ impl Ls {
         let mut tsb = ToolsetBuilder::new().with_global_only(self.global);
 
         if let Some(plugins) = &self.plugin {
-            let plugins = plugins.iter().map(|p| p.as_str()).collect_vec();
+            let plugins = plugins.iter().collect_vec();
             tsb = tsb.with_tools(&plugins);
         }
         let ts = tsb.build(config)?;
@@ -203,8 +204,8 @@ impl Ls {
 
         let rvs: Vec<RuntimeRow> = versions
             .into_iter()
-            .filter(|((plugin_name, _), _)| match &self.plugin {
-                Some(p) => p.contains(plugin_name),
+            .filter(|(_, (p, _))| match &self.plugin {
+                Some(pa) => pa.iter().any(|pa| p.is_arg(pa)),
                 None => true,
             })
             .sorted_by_cached_key(|((plugin_name, version), _)| {

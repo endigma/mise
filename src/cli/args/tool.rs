@@ -6,27 +6,36 @@ use console::style;
 use miette::Result;
 use regex::Regex;
 
-use crate::plugins::{unalias_plugin, PluginName};
+use crate::plugins::{unalias_plugin, PluginName, PluginType};
 use crate::toolset::ToolVersionRequest;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ToolArg {
     pub plugin: PluginName,
+    pub plugin_type: PluginType,
     pub tvr: Option<ToolVersionRequest>,
 }
 
 impl ToolArg {
     pub fn parse(input: &str) -> Self {
+        let (plugin_type, input) = input.split_once(':').unwrap_or(("external", input));
+        let plugin_type = match plugin_type {
+            "external" => PluginType::External,
+            "cargo" => PluginType::Cargo,
+            _ => unimplemented!("Unknown plugin type: {}", plugin_type),
+        };
         match input.split_once('@') {
             Some((plugin, version)) => {
                 let plugin = unalias_plugin(plugin).to_string();
                 Self {
                     plugin: plugin.clone(),
+                    plugin_type,
                     tvr: Some(ToolVersionRequest::new(plugin, version)),
                 }
             }
             None => Self {
                 plugin: unalias_plugin(input).into(),
+                plugin_type,
                 tvr: None,
             },
         }
